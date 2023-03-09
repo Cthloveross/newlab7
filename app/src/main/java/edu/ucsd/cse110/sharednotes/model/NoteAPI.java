@@ -87,26 +87,30 @@ public class NoteAPI {
         var json = gson.toJson(note);
 
         var body = RequestBody.create(json, JSON);
-        String temp = note.title.replace(" ", "%20");
+        String temp = note.title;//.replace(" ", "%20");
         var request = new Request.Builder()
-                .header("Content-Type", "application/json")
+                //.header("Content-Type", "application/json")
                 .url("https://sharednotes.goto.ucsd.edu/notes/" + temp)//URLEncoder.encode(temp, "UTF-8"))
-                .method("PUT", body)
+                .put(body)
                 .build();
 
         try (var response = client.newCall(request).execute()) {
-            int code = response.code();
-            String message = response.message();
-            System.out.println("Response code: " + code);
-            System.out.println("Response message: " + message);
+//            int code = response.code();
+//            String message = response.message();
+//            System.out.println("Response code: " + code);
+//            System.out.println("Response message: " + message);
             return response.isSuccessful();
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("fail");
+            System.out.println("Fail to put not remote");
             return false;
         }
 
+    }
+    public Future<Boolean> putAsync(Note note) {
+        var executor = Executors.newSingleThreadExecutor();
+        return executor.submit(() -> put(note));
     }
 
     /**
@@ -122,13 +126,21 @@ public class NoteAPI {
                 .build();
 
         try (var response = client.newCall(request).execute()) {
+            int code = response.code();
+            if (code != 200) {
+                System.out.println("Received error response with status code " + code);
+                return null;
+            }
+
             assert response.body() != null;
             var body = response.body().string();
             return gson.fromJson(body, Note.class);
         } catch (Exception e) {
             e.printStackTrace();
+            System.out.println("Get nothing");
             return null;
         }
     }
+
 
 }
